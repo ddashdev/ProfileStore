@@ -268,6 +268,23 @@ do
 		return connection
 	end
 
+	function SignalClass:Once(listener: (...any) -> ())
+		local connection
+		local done = false
+
+		connection = self:Connect(function(...)
+			if done then
+				return
+			end
+
+			done = true
+			connection:Disconnect()
+			listener(...)
+		end)
+
+		return connection
+	end
+
 	function SignalClass:GetListenerCount(): number
 		return self.listener_count
 	end
@@ -906,6 +923,15 @@ end
 
 export type JSONAcceptable = { JSONAcceptable } | { [string]: JSONAcceptable } | number | string | boolean | buffer
 
+type ConnectionLike = {
+	Disconnect: (self: any) -> (),
+}
+
+type Signal<T> = {
+	Connect: (self: any, listener: T) -> ConnectionLike,
+	Once: (self: any, listener: T) -> ConnectionLike,
+}
+
 export type Profile<T> = {
 	Data: T & JSONAcceptable,
 	LastSavedData: T & JSONAcceptable,
@@ -915,20 +941,10 @@ export type Profile<T> = {
 	RobloxMetaData: JSONAcceptable,
 	UserIds: { number },
 	KeyInfo: DataStoreKeyInfo,
-	OnSave: { Connect: (self: any, listener: () -> ()) -> { Disconnect: (self: any) -> () } },
-	OnLastSave: {
-		Connect: (
-			self: any,
-			listener: (reason: "Manual" | "External" | "Shutdown") -> ()
-		) -> { Disconnect: (self: any) -> () },
-	},
-	OnSessionEnd: { Connect: (self: any, listener: () -> ()) -> { Disconnect: (self: any) -> () } },
-	OnAfterSave: {
-		Connect: (
-			self: any,
-			listener: (last_saved_data: T & JSONAcceptable) -> ()
-		) -> { Disconnect: (self: any) -> () },
-	},
+	OnSave: Signal<() -> ()>,
+	OnLastSave: Signal<(reason: "Manual" | "External" | "Shutdown") -> ()>,
+	OnSessionEnd: Signal<() -> ()>,
+	OnAfterSave: Signal<(last_saved_data: T & JSONAcceptable) -> ()>,
 	ProfileStore: JSONAcceptable,
 	Key: string,
 
