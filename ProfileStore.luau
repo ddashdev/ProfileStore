@@ -933,8 +933,8 @@ type Signal<T> = {
 }
 
 export type Profile<T> = {
-	Data: T & JSONAcceptable,
-	LastSavedData: T & JSONAcceptable,
+	Data: T,
+	LastSavedData: T,
 	FirstSessionTime: number,
 	SessionLoadCount: number,
 	Session: { PlaceId: number, JobId: string }?,
@@ -944,7 +944,7 @@ export type Profile<T> = {
 	OnSave: Signal<() -> ()>,
 	OnLastSave: Signal<(reason: "Manual" | "External" | "Shutdown") -> ()>,
 	OnSessionEnd: Signal<() -> ()>,
-	OnAfterSave: Signal<(last_saved_data: T & JSONAcceptable) -> ()>,
+	OnAfterSave: Signal<(last_saved_data: T) -> ()>,
 	ProfileStore: JSONAcceptable,
 	Key: string,
 
@@ -996,23 +996,11 @@ type ConstantName =
 export type ProfileStoreModule = {
 	IsClosing: boolean,
 	IsCriticalState: boolean,
-	OnError: {
-		Connect: (
-			self: any,
-			listener: (message: string, store_name: string, profile_key: string) -> ()
-		) -> { Disconnect: (self: any) -> () },
-	},
-	OnOverwrite: {
-		Connect: (
-			self: any,
-			listener: (store_name: string, profile_key: string) -> ()
-		) -> { Disconnect: (self: any) -> () },
-	},
-	OnCriticalToggle: {
-		Connect: (self: any, listener: (is_critical: boolean) -> ()) -> { Disconnect: (self: any) -> () },
-	},
+	OnError: Signal<(message: string, store_name: string, profile_key: string) -> ()>,
+	OnOverwrite: Signal<(store_name: string, profile_key: string) -> ()>,
+	OnCriticalToggle: Signal<(is_critical: boolean) -> ()>,
 	DataStoreState: "NotReady" | "NoInternet" | "NoAccess" | "Access",
-	New: <T>(store_name: string, template: (T & JSONAcceptable)?) -> ProfileStore<T>,
+	New: <T>(store_name: string, template: T?) -> ProfileStore<T>,
 	SetConstant: (name: ConstantName, value: number) -> (),
 }
 
